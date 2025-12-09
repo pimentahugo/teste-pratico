@@ -2,13 +2,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using MongoDB.Driver;
+using OrderTracking.Domain.Interfaces;
 using OrderTracking.Domain.Repositories;
-using OrderTracking.Infrastructure.Data.Mongo;
-using OrderTracking.Infrastructure.Data.Mongo.Models;
 using OrderTracking.Infrastructure.Data.SqlServer;
+using OrderTracking.Infrastructure.Messaging;
+using OrderTracking.Infrastructure.Messaging.Settings;
 using OrderTracking.Infrastructure.Repositories;
-using OrderTracking.Infrastructure.Services.Cache;
+using RabbitMQ.Client;
 
 namespace OrderTracking.Infrastructure;
 public static class DependencyInjection
@@ -17,6 +17,27 @@ public static class DependencyInjection
 	{
 		AddEntityFramework(services, configuration);
 		AddRepositories(services);
+		AddRabbitMq(services, configuration);
+	}
+
+	private static void AddRabbitMq(IServiceCollection services, IConfiguration configuration)
+	{
+		services.Configure<RabbitMqSettings>(configuration.GetSection("RabbitMq"));
+
+		services.AddSingleton(provider =>
+		{
+			return provider.GetRequiredService<IOptions<RabbitMqSettings>>().Value;
+		});
+
+		services.AddSingleton<RabbitMqConnection>();
+
+		services.AddSingleton<IConnection>(provider =>
+		{
+			var rabbitMqConnection = provider.GetRequiredService<RabbitMqConnection>();
+			return rabbitMqConnection.GetConnection().GetAwaiter().GetResult();
+		});
+
+		services.AddScoped<IMessagePublisher, RabbitMqPublisher>();
 	}
 
 	private static void AddRepositories(IServiceCollection services)
