@@ -1,4 +1,5 @@
-﻿using OrderTracking.Domain.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using OrderTracking.Domain.Entities;
 using OrderTracking.Domain.Repositories;
 using OrderTracking.Infrastructure.Data.SqlServer;
 using OrderTracking.Infrastructure.Services.Cache;
@@ -13,6 +14,11 @@ public class OrderRepository : IOrderRepository
 	{
 		_context = context;
 		_cacheService = cacheService;
+	}
+
+	public async Task<IEnumerable<Order>> GetAllAsync()
+	{
+		return await _context.Orders.ToListAsync();
 	}
 
 	public async Task<Order?> GetByIdAsync(Guid id)

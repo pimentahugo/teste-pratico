@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OrderTracking.Application.UseCases.Order.Create;
+using OrderTracking.Application.UseCases.Order.GetAll;
 using OrderTracking.Application.UseCases.Order.GetById;
 
 namespace OrderTracking.Application;
@@ -20,7 +21,8 @@ public static class DependencyInjection
 
 	private static void AddUseCases(IServiceCollection services)
 	{
-		services.AddScoped<ICreateOrderUseCase, CreateOrderUseCase>();
+		services.AddScoped<IGetAllOrdersUseCase, GetAllOrdersUseCase>();
 		services.AddScoped<IOrderGetByIdUseCase, OrderGetByIdUseCase>();
+		services.AddScoped<ICreateOrderUseCase, CreateOrderUseCase>();
 	}
 }

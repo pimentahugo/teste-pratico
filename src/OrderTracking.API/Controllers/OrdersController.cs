@@ -2,27 +2,21 @@
 using OrderTracking.API.Configs;
 using OrderTracking.Application.Responses;
 using OrderTracking.Application.UseCases.Order.Create;
+using OrderTracking.Application.UseCases.Order.GetAll;
 using OrderTracking.Application.UseCases.Order.GetById;
 using System.Net;
 
 namespace OrderTracking.API.Controllers;
 public class OrdersController : BaseController
 {
-	[HttpPost]
-	[ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
-	[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-	public async Task<IActionResult> Create(
-		[FromServices] ICreateOrderUseCase useCase,
-		[FromBody] CreateOrderRequest request)
+	[HttpGet()]
+	[ProducesResponseType(typeof(ApiResponse<OrderResponse>), StatusCodes.Status200OK)]
+	public async Task<IActionResult> GetAll(
+		[FromServices] IGetAllOrdersUseCase useCase)
 	{
-		var result = await useCase.ExecuteAsync(request);
+		var result = await useCase.ExecuteAsync();
 
-		if(!result.IsSucess)
-		{
-			return CustomResponse(result, HttpStatusCode.BadRequest);
-		}
-
-		return CustomResponse(result, HttpStatusCode.Created);
+		return CustomResponse(result, HttpStatusCode.OK);
 	}
 
 	[HttpGet("{id:guid}")]
@@ -40,5 +34,22 @@ public class OrdersController : BaseController
 		}
 
 		return CustomResponse(result, HttpStatusCode.OK);
+	}
+
+	[HttpPost]
+	[ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+	[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+	public async Task<IActionResult> Create(
+	[FromServices] ICreateOrderUseCase useCase,
+	[FromBody] CreateOrderRequest request)
+	{
+		var result = await useCase.ExecuteAsync(request);
+
+		if (!result.IsSucess)
+		{
+			return CustomResponse(result, HttpStatusCode.BadRequest);
+		}
+
+		return CustomResponse(result, HttpStatusCode.Created);
 	}
 }
