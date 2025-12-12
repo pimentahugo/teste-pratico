@@ -32,7 +32,10 @@ public class RabbitMqPublisher : IMessagePublisher
 
 		var properties = new BasicProperties
 		{
-			Persistent = true
+			Persistent = true,
+			MessageId = Guid.NewGuid().ToString(),
+			Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds()),
+			ContentType = "application/json"
 		};
 
 		await channel.BasicPublishAsync(

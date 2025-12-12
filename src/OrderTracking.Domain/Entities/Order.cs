@@ -27,7 +27,7 @@ public class Order
 	public static Order Criar(Guid id, string cliente, decimal valor, DateTime dataPedido)
 	{
 		return new Order(
-			id: Guid.NewGuid(),
+			id: id,
 			cliente: cliente,
 			valor: valor,
 			dataPedido: dataPedido);
