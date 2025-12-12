@@ -9,4 +9,5 @@ public static class ValidationMessages
 	public static string Pedido_ClienteMaxLength => "O nome do cliente não pode exceder 100 caracteres.";
 	public static string Pedido_ValorInvalido => "O valor do pedido deve ser maior que zero.";
 	public static string Pedido_DataInvalida => "A data do pedido informada é invalida.";	
+	public static string Order_NotFound => "O pedido informado não foi encontrado.";
 }
