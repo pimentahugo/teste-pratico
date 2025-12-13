@@ -43,6 +43,8 @@ public class Order
 
 	private void Validar()
 	{
+		if (Id == Guid.Empty)
+			throw new DomainException(ValidationMessages.Pedido_IdObrigatorio);
 		if(string.IsNullOrWhiteSpace(Cliente))
 			throw new DomainException(ValidationMessages.Pedido_ClienteObrigatorio);
 		if (Valor <= 0)

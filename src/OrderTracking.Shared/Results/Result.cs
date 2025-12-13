@@ -1,14 +1,14 @@
 ﻿namespace OrderTracking.Shared.Results;
 public class Result<T>
 {
-	public bool IsSucess { get; }
+	public bool IsSuccess { get; }
 	public string? Message { get; }
 	public IReadOnlyCollection<string>? Errors { get; }
 	public T? Data { get; }
 
 	private Result(bool success, string? message = null, IEnumerable<string>? errors = null, T? data = default)
 	{
-		IsSucess = success;
+		IsSuccess = success;
 		Message = message;
 		Errors = errors?.ToList();
 		Data = data;

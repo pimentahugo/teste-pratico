@@ -28,7 +28,7 @@ public class OrdersController : BaseController
 	{
 		var result = await useCase.ExecuteAsync(id);
 
-		if(!result.IsSucess)
+		if(!result.IsSuccess)
 		{
 			return CustomResponse(result, HttpStatusCode.NotFound);
 		}
@@ -37,7 +37,7 @@ public class OrdersController : BaseController
 	}
 
 	[HttpPost]
-	[ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+	[ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status202Accepted)]
 	[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
 	public async Task<IActionResult> Create(
 	[FromServices] ICreateOrderUseCase useCase,
@@ -45,11 +45,11 @@ public class OrdersController : BaseController
 	{
 		var result = await useCase.ExecuteAsync(request);
 
-		if (!result.IsSucess)
+		if (!result.IsSuccess)
 		{
 			return CustomResponse(result, HttpStatusCode.BadRequest);
 		}
 
-		return CustomResponse(result, HttpStatusCode.Created);
+		return CustomResponse(result, HttpStatusCode.Accepted);
 	}
 }

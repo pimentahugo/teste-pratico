@@ -22,7 +22,7 @@ public class OrderGetByIdUseCase : IOrderGetByIdUseCase
 
 		if (order is null)
 		{
-			return Result<OrderResponse>.Fail(ValidationMessages.Order_NotFound);
+			return Result<OrderResponse>.Fail(ValidationMessages.Pedido_NotFound);
 		}
 
 		var response = new OrderResponse(order.Id, order.Cliente, order.Valor, order.DataPedido, order.DataCriacao);
