@@ -10,6 +10,12 @@ public class ApiResponse<T>
 	public T? Data { get; init; }
 	public IEnumerable<string>? Errors { get; init; }
 
+	// Construtor para desserialização
+	public ApiResponse()
+	{
+		
+	}
+
 	private ApiResponse(string? message, T? data, IEnumerable<string>? errors)
 	{
 		Message = message;
