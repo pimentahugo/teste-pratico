@@ -1,34 +1,215 @@
-version: '3.8'
 services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ordertracking-sqlserver-dev
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=DevPassword123!
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P DevPassword123! -Q 'SELECT 1' -C || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - ordertracking
+
+  mongodb:
+    image: mongo:7.0
+    container_name: ordertracking-mongodb-dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ordertracking
+
   rabbitmq:
     image: rabbitmq:3-management
+    container_name: ordertracking-rabbitmq-dev
     ports:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-      
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ordertracking
+
+  api:
+    build:
+      context: . 
+      dockerfile: src/OrderTracking.API/Dockerfile
+    container_name: ordertracking-api-dev
     ports:
-      - "1433:1433"
+      - "5000:8080"
     environment:
-      SA_PASSWORD: "YourPassword123"
-      ACCEPT_EULA: "Y"
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__SqlServer=Server=sqlserver,1433;Database=OrderTrackingDb;User Id=sa;Password=DevPassword123!;TrustServerCertificate=True;
+      - RabbitMq__HostName=rabbitmq
+      - RabbitMq__Port=5672
+      - RabbitMq__UserName=guest
+      - RabbitMq__Password=guest
+      - RabbitMq__QueueName=orders
+      - MongoDB__ConnectionString=mongodb://mongodb:27017
+      - MongoDB__DatabaseName=OrderTrackingCache
+      - MongoDB__OrdersCollectionName=orders
+      - MongoDB__CacheExpirationMinutes=30
     volumes:
-      - sqlserver_data:/var/opt/mssql
-      
-  mongodb:
-    image: mongo:latest
+      - ./docker/logs:/app/logs
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - ordertracking
+
+  worker:
+    build:
+      context: .  
+      dockerfile: src/OrderTracking.Worker/Dockerfile
+    container_name: ordertracking-worker-dev
+    environment:
+      - ConnectionStrings__SqlServer=Server=sqlserver,1433;Database=OrderTrackingDb;User Id=sa;Password=DevPassword123!;TrustServerCertificate=True;
+      - RabbitMq__HostName=rabbitmq
+      - RabbitMq__Port=5672
+      - RabbitMq__UserName=guest
+      - RabbitMq__Password=guest
+      - RabbitMq__QueueName=orders
+      - MongoDB__ConnectionString=mongodb://mongodb:27017
+      - MongoDB__DatabaseName=OrderTrackingCache
+      - MongoDB__OrdersCollectionName=orders
+      - MongoDB__CacheExpirationMinutes=30
+    volumes:
+      - ./docker/logs:/app/logs
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      api:
+        condition: service_started
+    restart: on-failure
+    networks:
+      - ordertracking
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ordertracking-prometheus-dev
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
     ports:
-      - "27017:27017"
+      - "9090:9090"
     volumes:
-      - mongodb_data:/data/db
+      - ./docker/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    networks:
+      - ordertracking
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ordertracking-grafana-dev
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    restart: unless-stopped
+    networks:
+      - ordertracking
+
+  loki:
+    image: grafana/loki:latest
+    container_name: ordertracking-loki-dev
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./docker/observability/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    restart: unless-stopped
+    networks:
+      - ordertracking
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: ordertracking-promtail-dev
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./docker/observability/promtail/promtail.yml:/etc/promtail/config.yml:ro
+      - ./docker/logs:/var/log/ordertracking:ro
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - ordertracking
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: ordertracking-tempo-dev
+    command: [ "-config.file=/etc/tempo.yml" ]
+    ports:
+      - "3200:3200" 
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./docker/observability/tempo/tempo.yml:/etc/tempo.yml:ro
+      - tempo-data:/var/tempo
+    restart: unless-stopped
+    networks:
+      - ordertracking
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: ordertracking-node-exporter-dev
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+    networks:
+      - ordertracking
 
 volumes:
-  rabbitmq_data:
-  sqlserver_data:
-  mongodb_data:
+  sqlserver-data:
+  mongodb-data:
+  rabbitmq-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+  tempo-data:
+
+networks:
+  ordertracking:
+    driver: bridge

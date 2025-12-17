@@ -30,6 +30,45 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderTracking.UnitTests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderTracking.IntegrationTests", "tests\OrderTracking.IntegrationTests\OrderTracking.IntegrationTests.csproj", "{B670890D-00AD-44B9-9836-5AB7BC0AFA5E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "logs", "logs", "{01736E4E-874A-4179-A5E4-A25FD5965ABE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "observability", "observability", "{D644C747-6493-45AA-A501-054CA41386DE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prometheus", "prometheus", "{980587EA-64D9-45E5-B388-5F00BC822704}"
+	ProjectSection(SolutionItems) = preProject
+		docker\observability\prometheus\prometheus.yml = docker\observability\prometheus\prometheus.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "loki", "loki", "{87E5572C-741B-4074-8CA3-BB47D003D0F1}"
+	ProjectSection(SolutionItems) = preProject
+		docker\observability\loki\loki-config.yml = docker\observability\loki\loki-config.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "promtail", "promtail", "{0C8FB281-5D4C-4CAD-A9C5-EE0762581A91}"
+	ProjectSection(SolutionItems) = preProject
+		docker\observability\promtail\promtail.yml = docker\observability\promtail\promtail.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "grafana", "grafana", "{9D7E5B67-E9B0-4BFF-8E87-5C9635717C53}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "provisioning", "provisioning", "{D2E26DD7-D978-4612-BD30-1E06259A8F24}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "datasources", "datasources", "{D50FDF20-3016-4702-A3B1-C4C626C1C257}"
+	ProjectSection(SolutionItems) = preProject
+		docker\observability\grafana\provisioning\datasources\datasources.yml = docker\observability\grafana\provisioning\datasources\datasources.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dashboards", "dashboards", "{5B8712A1-8483-4DCB-BA8F-3BC9FE19D8EB}"
+	ProjectSection(SolutionItems) = preProject
+		docker\observability\grafana\provisioning\dashboards\dashboards.yml = docker\observability\grafana\provisioning\dashboards\dashboards.yml
+		docker\observability\grafana\provisioning\dashboards\order-tracking.json = docker\observability\grafana\provisioning\dashboards\order-tracking.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tempo", "tempo", "{7D61B4D9-DE83-4568-8AB7-BE2A5BA66CC9}"
+	ProjectSection(SolutionItems) = preProject
+		docker\observability\tempo\tempo.yml = docker\observability\tempo\tempo.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +120,16 @@ Global
 		{A268A59F-9684-46B7-AE57-A3515E110EA0} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{04EC3499-1B32-4CEA-B70A-8AE859FFE42F} = {32B47648-739D-4769-B841-AFA941AF785D}
 		{B670890D-00AD-44B9-9836-5AB7BC0AFA5E} = {32B47648-739D-4769-B841-AFA941AF785D}
+		{01736E4E-874A-4179-A5E4-A25FD5965ABE} = {F8669ACB-CFC3-4EBA-BB03-C6D890D22333}
+		{D644C747-6493-45AA-A501-054CA41386DE} = {F8669ACB-CFC3-4EBA-BB03-C6D890D22333}
+		{980587EA-64D9-45E5-B388-5F00BC822704} = {D644C747-6493-45AA-A501-054CA41386DE}
+		{87E5572C-741B-4074-8CA3-BB47D003D0F1} = {D644C747-6493-45AA-A501-054CA41386DE}
+		{0C8FB281-5D4C-4CAD-A9C5-EE0762581A91} = {D644C747-6493-45AA-A501-054CA41386DE}
+		{9D7E5B67-E9B0-4BFF-8E87-5C9635717C53} = {D644C747-6493-45AA-A501-054CA41386DE}
+		{D2E26DD7-D978-4612-BD30-1E06259A8F24} = {9D7E5B67-E9B0-4BFF-8E87-5C9635717C53}
+		{D50FDF20-3016-4702-A3B1-C4C626C1C257} = {D2E26DD7-D978-4612-BD30-1E06259A8F24}
+		{5B8712A1-8483-4DCB-BA8F-3BC9FE19D8EB} = {D2E26DD7-D978-4612-BD30-1E06259A8F24}
+		{7D61B4D9-DE83-4568-8AB7-BE2A5BA66CC9} = {D644C747-6493-45AA-A501-054CA41386DE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A57B6443-FB52-4EB2-A5FB-EA692BFD6EF6}
