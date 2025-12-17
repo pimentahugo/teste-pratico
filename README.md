@@ -1,6 +1,6 @@
 # Order Tracking System - Sistema de Rastreamento de Pedidos
 
-Sistema completo de rastreamento de pedidos desenvolvido com .NET 8, React, RabbitMQ e MongoDB, implementando arquitetura de microsserviços com processamento assíncrono e observabilidade completa.
+Este projeto foi desenvolvido como solução para o teste prático de Desenvolvedor .NET. O sistema permite o cadastro e rastreamento de pedidos, utilizando processamento assíncrono via mensageria, persistência em banco relacional e cache NoSQL.
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-512bd4)](https://dotnet.microsoft.com/)
 [![React](https://img.shields.io/badge/React-18-61dafb)](https://reactjs.org/)
