@@ -103,7 +103,7 @@ Os serviços levam cerca de **2-3 minutos** para iniciar completamente. O Docker
 | **Frontend** | http://localhost:3000 | - |
 | **API** | http://localhost:5000 | - |
 | **Swagger** | http://localhost:5000/swagger | - |
-| **Health Check** | http://localhost:5000/api/health | - |
+| **Health Check** | http://localhost:5000/health | - |
 | **Grafana** | http://localhost:3001 | admin / admin |
 | **Prometheus** | http://localhost:9090 | - |
 | **RabbitMQ** | http://localhost:15672 | guest / guest |
