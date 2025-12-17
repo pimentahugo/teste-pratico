@@ -5,8 +5,11 @@ using OrderTracking.Worker.Handlers;
 using OrderTracking.Worker.Workers;
 using Serilog;
 
+Log.Logger = SerilogConfiguration.CreateLogger("OrderTracking.Worker", "1.0.0");
 try
 {
+	Log.Information("Iniciando OrderTracking.Worker");
+
 	var builder = Host.CreateApplicationBuilder(args);
 
 	builder.Services.AddSerilog();
@@ -27,11 +30,12 @@ try
 }
 catch (Exception ex)
 {
+	Log.Fatal(ex, " Worker finalizado inesperadamente!");
 	return 1;
 }
 finally
 {
-	
+	Log.CloseAndFlush();
 }
 
 return 0;

@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using Castle.Core.Logging;
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using OrderTracking.Application.UseCases.Order.Create;
 using OrderTracking.Domain.Interfaces;
@@ -10,6 +12,7 @@ namespace OrderTracking.UnitTests.Application;
 public class CreateOrderUseCaseTests
 {
 	private readonly Mock<IMessagePublisher> _mockPublisher;
+	private readonly Mock<ILogger<CreateOrderUseCase>> _mockLogger;
 	private readonly CreateOrderRequestValidator _validator;
 	private readonly CreateOrderUseCase _useCase;
 	private readonly CreateOrderRequestFaker _requestFaker;
@@ -17,8 +20,15 @@ public class CreateOrderUseCaseTests
 	public CreateOrderUseCaseTests()
 	{
 		_mockPublisher = new Mock<IMessagePublisher>();
+		_mockLogger = new Mock<ILogger<CreateOrderUseCase>>();
 		_validator = new CreateOrderRequestValidator();
-		_useCase = new CreateOrderUseCase(_validator, _mockPublisher.Object);
+
+		_useCase = new CreateOrderUseCase(
+			_validator,
+			_mockPublisher.Object,
+			_mockLogger.Object
+		);
+
 		_requestFaker = new CreateOrderRequestFaker();
 	}
 

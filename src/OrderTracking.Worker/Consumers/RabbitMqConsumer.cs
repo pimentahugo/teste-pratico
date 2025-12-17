@@ -13,18 +13,22 @@ public class RabbitMqConsumer : IMessageConsumer, IAsyncDisposable
 	private readonly IConnection _connection;
 	private readonly RabbitMqSettings _settings;
 	private readonly IServiceProvider _serviceProvider;
+	private readonly ILogger<RabbitMqConsumer> _logger;
 	private IChannel? _channel;
 	private bool _disposed;
 
-	public RabbitMqConsumer(IConnection connection, RabbitMqSettings settings, IServiceProvider serviceProvider)
+	public RabbitMqConsumer(IConnection connection, RabbitMqSettings settings, IServiceProvider serviceProvider, ILogger<RabbitMqConsumer> logger)
 	{
 		_connection = connection;
 		_settings = settings;
 		_serviceProvider = serviceProvider;
+		_logger = logger;
 	}
 
 	public async Task StartConsumingAsync(CancellationToken cancellationToken)
 	{
+		_logger.LogInformation("Criando canal RabbitMQ para consumir fila {QueueName}",_settings.QueueName);
+
 		_channel = await _connection.CreateChannelAsync();
 
 		await _channel.BasicQosAsync(
@@ -40,6 +44,12 @@ public class RabbitMqConsumer : IMessageConsumer, IAsyncDisposable
 			autoDelete: false,
 			arguments: null,
 			cancellationToken: cancellationToken);
+
+		await _channel.BasicQosAsync(0, 1, false);
+
+		_logger.LogInformation(
+				"Configurando consumer para fila {QueueName}",
+				_settings.QueueName);
 
 		var consumer = new AsyncEventingBasicConsumer(_channel);
 
@@ -59,46 +69,82 @@ public class RabbitMqConsumer : IMessageConsumer, IAsyncDisposable
 	{
 		var messageId = eventArgs.BasicProperties?.MessageId ?? "unknown";
 
-		using var scope = _serviceProvider.CreateScope();
-
-		var body = eventArgs.Body.ToArray();
-		var messageJson = Encoding.UTF8.GetString(body);
-
-		var orderEvent = JsonSerializer.Deserialize<PedidoCriadoEvent>(messageJson);
-
-		if(orderEvent is null)
+		try
 		{
-			if(_channel is not null)
+			using var scope = _serviceProvider.CreateScope();
+
+			var body = eventArgs.Body.ToArray();
+			var messageJson = Encoding.UTF8.GetString(body);
+
+			_logger.LogInformation(
+						"Mensagem recebida. MessageId: {MessageId}, Size: {MessageSize} bytes",
+						messageId,
+						body.Length
+					);
+
+			var orderEvent = JsonSerializer.Deserialize<PedidoCriadoEvent>(messageJson);
+
+			if (orderEvent is null)
 			{
-				await _channel.BasicNackAsync(
+				_logger.LogError(
+							"Falha ao deserializar mensagem {MessageId}. Payload: {Payload}",
+							messageId,
+							messageJson
+						);
+
+				if (_channel is not null)
+				{
+					await _channel.BasicNackAsync(
+						deliveryTag: eventArgs.DeliveryTag,
+						multiple: false,
+						requeue: false,
+						cancellationToken: cancellationToken);
+				}
+				return;
+			}
+
+			var handler = scope.ServiceProvider.GetRequiredService<IOrderEventHandler>();
+			await handler.HandleAsync(orderEvent, cancellationToken);
+
+			if (_channel is not null)
+			{
+				await _channel.BasicAckAsync(
 					deliveryTag: eventArgs.DeliveryTag,
 					multiple: false,
-					requeue: false,
 					cancellationToken: cancellationToken);
 			}
-			return;
+
+			_logger.LogInformation(
+						"Mensagem {MessageId} processada com sucesso",
+						messageId
+					);
 		}
-
-		var handler = scope.ServiceProvider.GetRequiredService<IOrderEventHandler>();
-		await handler.HandleAsync(orderEvent, cancellationToken);
-
-		if(_channel is not null)
+		catch (Exception ex)
 		{
-			await _channel.BasicAckAsync(
-				deliveryTag: eventArgs.DeliveryTag,
-				multiple: false,
-				cancellationToken: cancellationToken);
+			_logger.LogError(
+						ex,
+						"Erro ao processar mensagem {MessageId}. Erro: {ErrorMessage}",
+						messageId,
+						ex.Message
+					);
+
+			if (_channel is not null)
+				await _channel.BasicNackAsync(eventArgs.DeliveryTag, false, true);
 		}
 	}
 
 	public async Task StopConsumingAsync()
 	{
+		_logger.LogInformation("Parando consumidor RabbitMQ...");
+
 		if (_channel is not null)
 		{
 			await _channel.CloseAsync();
 			_channel.Dispose();
 			_channel = null;
 		}
+
+		_logger.LogInformation("Consumidor RabbitMQ parado");
 	}
 
 	public async ValueTask DisposeAsync()
