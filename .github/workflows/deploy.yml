@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-and-push:
@@ -26,8 +27,7 @@ jobs:
 
       - name: Build e Push - ${{ matrix.service }}
         run: |
-          docker build -t hugopimenta07/ordertracking-${{ matrix.service }}:latest \
-            -f src/OrderTracking.${{ matrix.service == 'api' && 'API' || 'Worker' }}/Dockerfile .
+          docker build -t hugopimenta07/ordertracking-${{ matrix.service }}:latest -f src/OrderTracking.${{ matrix.service == 'api' && 'API' || 'Worker' }}/Dockerfile .
           docker push hugopimenta07/ordertracking-${{ matrix.service }}:latest
 
   deploy:
